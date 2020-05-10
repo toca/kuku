@@ -45,6 +45,10 @@ func (this *Renderer) Clear() {
 	}
 }
 
+func (this *Renderer) Console() *console.Console {
+	return this.console
+}
+
 func (this *Renderer) Close() {
 	this.console.Close()
 }
