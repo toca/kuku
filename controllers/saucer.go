@@ -3,8 +3,8 @@ package controllers
 import (
 	"fmt"
 
-	"../input"
-	"../models"
+	"kuku/models"
+	"kuku/operation"
 )
 
 type Saucer struct {
@@ -15,15 +15,18 @@ func NewSaucer(m *models.Saucer) *Saucer {
 	return &Saucer{m}
 }
 
-func (this *Saucer) Input(ipt input.Input) {
-	fmt.Printf("RepeatCount:%d\n", ipt.Repeat)
-	// for i := 0; i <= ipt.Repeat; i++ {
-	switch ipt.Key {
-	case input.VK_LEFT:
-		this.model.Left()
-	case input.VK_RIGHT:
-		this.model.Right()
-	default:
+func (this *Saucer) Input(keyInput operation.KeyInput) {
+	fmt.Printf("RepeatCount:%d\n", keyInput.Repeat)
+	fmt.Println(this.model.Rect())
+	for i := 0; i < keyInput.Repeat; i++ {
+		switch keyInput.Key {
+		case operation.VK_LEFT:
+			this.model.Left()
+		case operation.VK_RIGHT:
+			this.model.Right()
+		default:
+			fmt.Printf("ignored:%v\n", keyInput.Key)
+		}
 	}
-	// }
+	fmt.Println(this.model.Rect())
 }

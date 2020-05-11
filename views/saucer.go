@@ -1,7 +1,9 @@
 package views
 
 import (
-	"../models"
+	"fmt"
+
+	"kuku/models"
 )
 
 type Saucer struct {
@@ -14,6 +16,9 @@ func NewSaucer(renderer *Renderer, model *models.Saucer) *Saucer {
 }
 
 func (this *Saucer) Load() {
+	if this.model.Rect().Min.X <= 0 {
+		panic(fmt.Sprintf("saucer index out. %v", this.model.Rect()))
+	}
 	for x := this.model.Rect().Min.X; x < this.model.Rect().Max.X; x++ {
 		this.renderer.Set(x, this.model.Rect().Min.Y, '▬')
 	}

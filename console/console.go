@@ -2,6 +2,7 @@ package console
 
 import (
 	"fmt"
+	"kuku/operation"
 	"syscall"
 	"unsafe"
 )
@@ -36,6 +37,7 @@ var (
 	GetStdHandle                 = findProc(kernel32Dll, "GetStdHandle")
 	SetConsoleScreenBufferSize   = findProc(kernel32Dll, "SetConsoleScreenBufferSize")
 	GetConsoleScreenBufferInfoEx = findProc(kernel32Dll, "GetConsoleScreenBufferInfoEx")
+	ReadConsoleInput             = findProc(kernel32Dll, "ReadConsoleInputW")
 )
 
 // define win32 const
@@ -45,6 +47,18 @@ const _CONSOLE_TEXTMODE_BUFFER = 0x00000001
 const _GENERIC_READ = 0x40000000
 const _GENERIC_WRITE = 0x80000000
 const _STD_OUTPUT_HANDLE = 0xFFFFFFF5
+const _STD_INPUT_HANDLE = 0xFFFFFFFF6
+const _KEY_EVENT = 0x0001
+
+type VirtualKeyCode uint16
+
+const (
+	VK_NULL  VirtualKeyCode = 0x00
+	VK_LEFT  VirtualKeyCode = 0x25
+	VK_UP    VirtualKeyCode = 0x26
+	VK_RIGHT VirtualKeyCode = 0x27
+	VK_DOWN  VirtualKeyCode = 0x28
+)
 
 // type alias win32 APIs
 type (
@@ -53,7 +67,7 @@ type (
 	_LONG     = int32
 	_ULONG    = uint32
 	_WORD     = uint16
-	_DWORE    = uint32
+	_DWORD    = uint32
 	_BOOL     = int32
 	_COLORREF = uint32
 )
@@ -82,13 +96,38 @@ type (
 		bFullscreenSupported _BOOL
 		ColorTable           [16]_COLORREF
 	}
+	_INPUT_RECORD struct {
+		EventType   _WORD
+		_padding    _WORD
+		EventRecord [16]byte
+		// union {
+		//   keyEvent KEY_EVENT_RECORD          ;
+		//   MOUSE_EVENT_RECORD        MouseEvent;
+		//   WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
+		//   MENU_EVENT_RECORD         MenuEvent;
+		//   FOCUS_EVENT_RECORD        FocusEvent;
+		// } Event;
+	}
+	_KEY_EVENT_RECORD struct {
+		bKeyDown         _BOOL
+		wRepeatCount     _WORD
+		wVirtualKeyCode  _WORD
+		wVirtualScanCode _WORD
+		char             [2]byte
+		// union {
+		//   WCHAR UnicodeChar;
+		//   CHAR  AsciiChar;
+		// } uChar;
+		dwControlKeyState _DWORD
+	}
 ) // end structure definition ///////////////////////////////////////////////////////////////////////
 
-// console
+// console struct
 type Console struct {
 	screenBuffers      [2]uintptr
 	pointer            int
 	stdOutHandle       uintptr
+	stdInHandle        uintptr
 	windowRect         *_SMALL_RECT
 	originalWindowSize *_SMALL_RECT
 }
@@ -102,12 +141,16 @@ func NewConsole(width int, height int) (*Console, error) {
 
 	// std out handle
 	stdOutHandle, lastErr, err := GetStdHandle.Call(_STD_OUTPUT_HANDLE)
-	// fmt.Printf("stdout:%v %v %v\n", stdOutHandle, lastErr, err)
 	if lastErr != 0 {
 		fmt.Println(err)
 		return nil, err
 	}
-
+	// std input handle
+	stdInHandle, lastErr, err := GetStdHandle.Call(_STD_INPUT_HANDLE)
+	if lastErr != 0 {
+		fmt.Println(err)
+		return nil, err
+	}
 	// get current window size
 	screenBufferInfo := _CONSOLE_SCREEN_BUFFER_INFOEX{}
 	screenBufferInfo.cbSize = uint32(unsafe.Sizeof(screenBufferInfo))
@@ -139,7 +182,7 @@ func NewConsole(width int, height int) (*Console, error) {
 		return nil, err
 	}
 
-	return &Console{[2]uintptr{handle1, handle2}, 0, stdOutHandle, &newWindowSize, &originalWindowSize}, nil
+	return &Console{[2]uintptr{handle1, handle2}, 0, stdOutHandle, stdInHandle, &newWindowSize, &originalWindowSize}, nil
 }
 
 // write to console
@@ -181,4 +224,37 @@ func (this *Console) ResetWindowSize() {
 	// if lastErr != 0 || res == 0 {
 	// 	fmt.Println(err)
 	// }
+}
+
+func (this *Console) ReadInput() (bool, operation.KeyInput) {
+	record := _INPUT_RECORD{}
+	var len _DWORD = 1
+	var numOfEvents _DWORD = 0
+
+	res, _, err := ReadConsoleInput.Call(this.stdInHandle, uintptr(unsafe.Pointer(&record)), uintptr(len), uintptr(unsafe.Pointer(&numOfEvents)))
+	if res == 0 {
+		fmt.Println(err)
+		return false, operation.KeyInput{operation.VK_NULL, 0}
+	}
+	if record.EventType != _KEY_EVENT {
+		return false, operation.KeyInput{operation.VK_NULL, 0}
+	}
+	keyEventRecord := (*_KEY_EVENT_RECORD)(unsafe.Pointer(&record.EventRecord))
+	// fmt.Println(record.EventRecord)
+	// fmt.Printf("KD:%d, rep:%d, vk:0x%x, sc:0x%x, char:%X %X, state:%x\n",
+	// 	keyEventRecord.bKeyDown,
+	// 	keyEventRecord.wRepeatCount,
+	// 	keyEventRecord.wVirtualKeyCode,
+	// 	keyEventRecord.wVirtualScanCode,
+	// 	keyEventRecord.char[0], keyEventRecord.char[1],
+	// 	keyEventRecord.dwControlKeyState)
+	if keyEventRecord.bKeyDown != _TRUE {
+		return false, operation.KeyInput{operation.VK_NULL, 0}
+	}
+	return true, operation.KeyInput{operation.VirtualKeyCode(keyEventRecord.wVirtualKeyCode), int(keyEventRecord.wRepeatCount)}
+
+}
+
+func (this *Console) currentConsoleBuffer() uintptr {
+	return this.screenBuffers[this.pointer]
 }

@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"image"
 )
 
@@ -12,7 +11,7 @@ type Bullet struct {
 
 func NewBullet(x, y int, vx, vy int) *Bullet {
 	return &Bullet{
-		image.Rect(x, y, x+1, y+1),
+		image.Rect(x, y, x, y),
 		image.Pt(vx, vy)}
 }
 
@@ -38,5 +37,4 @@ func (this *Bullet) HitTest(o Object) bool {
 
 // object interface
 func (this *Bullet) Affect(o Object) {
-	fmt.Println(this.Rect())
 }
