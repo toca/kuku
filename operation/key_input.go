@@ -1,4 +1,4 @@
-package input
+package operation
 
 type VirtualKeyCode uint16
 
@@ -10,7 +10,7 @@ const (
 	VK_DOWN  VirtualKeyCode = 0x28
 )
 
-type Input struct {
+type KeyInput struct {
 	Key    VirtualKeyCode
 	Repeat int
 }

@@ -1,7 +1,7 @@
 package views
 
 import (
-	"../models"
+	"kuku/models"
 )
 
 type Frame struct {

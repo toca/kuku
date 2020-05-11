@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./models"
+	"kuku/models"
 )
 
 type Collider struct {

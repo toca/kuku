@@ -1,7 +1,7 @@
 package views
 
 import (
-	"../console"
+	"kuku/console"
 )
 
 type Renderer struct {
