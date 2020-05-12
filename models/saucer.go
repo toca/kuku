@@ -5,12 +5,12 @@ import (
 )
 
 type Saucer struct {
-	rect image.Rectangle
+	rect *image.Rectangle
 }
 
 func NewSaucer(x0, y0, x1, y1 int) *Saucer {
 	r := image.Rect(x0, y0, x1, y1)
-	return &Saucer{r}
+	return &Saucer{&r}
 }
 
 func (this *Saucer) Left() {
@@ -25,11 +25,18 @@ func (this *Saucer) Right() {
 
 // implememt models.Object
 func (this *Saucer) Rect() image.Rectangle {
-	return this.rect
+	return *this.rect
 }
 func (this *Saucer) HitTest(o Object) bool {
-	return this.rect.Overlaps(o.Rect())
+	rect := o.Rect()
+	return Overlap(this.rect, &rect)
 }
 func (this *Saucer) Affect(o Object) {
-
+	if bullet, ok := o.(*Bullet); ok {
+		if 0 < bullet.Vect().Y {
+			v := bullet.Vect()
+			v.Y *= -1
+			bullet.SetVect(&v)
+		}
+	}
 }

@@ -11,7 +11,7 @@ type Object interface {
 }
 
 // to collision detection
-func Overlap(lhs, rhs image.Rectangle) bool {
+func Overlap(lhs, rhs *image.Rectangle) bool {
 	// x
 	if !lineOverlap(lhs.Min.X, lhs.Max.X, rhs.Min.X, rhs.Max.X) {
 		return false

@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"fmt"
-
 	"kuku/models"
 	"kuku/operation"
 )
@@ -16,8 +14,6 @@ func NewSaucer(m *models.Saucer) *Saucer {
 }
 
 func (this *Saucer) Input(keyInput operation.KeyInput) {
-	fmt.Printf("RepeatCount:%d\n", keyInput.Repeat)
-	fmt.Println(this.model.Rect())
 	for i := 0; i < keyInput.Repeat; i++ {
 		switch keyInput.Key {
 		case operation.VK_LEFT:
@@ -25,8 +21,6 @@ func (this *Saucer) Input(keyInput operation.KeyInput) {
 		case operation.VK_RIGHT:
 			this.model.Right()
 		default:
-			fmt.Printf("ignored:%v\n", keyInput.Key)
 		}
 	}
-	fmt.Println(this.model.Rect())
 }
