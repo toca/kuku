@@ -1,7 +1,5 @@
 package models
 
-import "fmt"
-
 type Blocks struct {
 	list []*Block
 }
@@ -29,7 +27,6 @@ func NewBlocks() *Blocks {
 	list = append(list, NewBlock(54, 26, 69, 26, NORMAL_BLOCK))
 	list = append(list, NewBlock(75, 26, 89, 26, NORMAL_BLOCK))
 
-	fmt.Println(*list[0])
 	return &Blocks{list}
 }
 

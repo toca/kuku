@@ -3,14 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"kuku/controllers"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
-
-	"kuku/controllers"
-	"kuku/models"
-	"kuku/views"
 )
 
 // how to build!
@@ -35,84 +31,96 @@ func main() {
 		test()
 		return
 	}
-	{
-		renderer, err := views.NewRenderer(100, 41)
-		if err != nil {
-			panic(err)
-		}
-		defer renderer.Close()
-		console := renderer.Console()
+	master := controllers.NewGameMaster()
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT)
+	go func() {
+		<-sigChan
+		master.Stop()
+		fmt.Println("interrupted!!")
+	}()
+	master.MainLoop()
+	// renderer, err := views.NewRenderer(100, 41)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer renderer.Close()
+	// console := renderer.Console()
 
-		bulletModel := models.NewBullet(1, 1, 60, 60)
-		bulletView := views.NewBullet(renderer, bulletModel)
+	// bulletModel := models.NewBullet(2, 2, 20, 20)
+	// bulletView := views.NewBullet(renderer, bulletModel)
 
-		frameModel := models.NewFrame(100, 40)
-		frameView := views.NewFrame(renderer, frameModel)
+	// frameModel := models.NewFrame(100, 40)
+	// frameView := views.NewFrame(renderer, frameModel)
 
-		saucerModel := models.NewSaucer(4, 38, 94, 38)
-		saucerView := views.NewSaucer(renderer, saucerModel)
-		saucerController := controllers.NewSaucer(saucerModel)
+	// saucerModel := models.NewSaucer(14, 38, 84, 38)
+	// saucerView := views.NewSaucer(renderer, saucerModel)
+	// saucerController := controllers.NewSaucer(saucerModel)
 
-		blocks := models.NewBlocks()
-		blocksView := views.NewBlocks(renderer, blocks)
+	// blocks := models.NewBlocks()
+	// blocksView := views.NewBlocks(renderer, blocks)
 
-		statusModel := models.GetStatus()
-		statusModel.SetPos(0, 40)
-		statusView := views.NewStatus(renderer, statusModel)
-		statusModel.Message = "start! (to stop Ctrl + c)"
+	// statusModel := models.GetStatus()
+	// statusModel.SetPos(0, 40)
+	// statusView := views.NewStatus(renderer, statusModel)
+	// statusModel.Message = "start! (to stop Ctrl + c)"
 
-		collider := NewCollider()
-		collider.AddActive(bulletModel)
-		collider.AddActive(saucerModel)
-		collider.AddMotionless(saucerModel)
-		collider.AddMotionless(frameModel)
-		for _, v := range blocks.List() {
-			collider.AddMotionless(v)
-		}
-		// break
-		stop := false
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, syscall.SIGINT)
-		go func() {
-			<-sigChan
-			stop = true
-			fmt.Println("interrupted!!")
-		}()
+	// collider := NewCollider()
+	// collider.AddActive(bulletModel)
+	// collider.AddActive(saucerModel)
+	// collider.AddMotionless(saucerModel)
+	// collider.AddMotionless(frameModel)
+	// for _, v := range blocks.List() {
+	// 	collider.AddMotionless(v)
+	// }
 
-		master := models.NewGameMaster(blocks.List())
+	// master := controllers.NewGameMaster(blocks.List(), bulletView, bulletModel)
 
-		// main loop
-		for !stop {
-			// render
-			frameView.Load()
-			bulletView.Load()
-			saucerView.Load()
-			blocksView.Load()
-			statusView.Load()
+	// // break
+	// stop := false
+	// sigChan := make(chan os.Signal, 1)
+	// signal.Notify(sigChan, syscall.SIGINT)
+	// go func() {
+	// 	<-sigChan
+	// 	master.Stop()
+	// 	fmt.Println("interrupted!!")
+	// }()
 
-			renderer.Render()
-			renderer.Clear()
+	// // main loop
+	// for !stop {
+	// 	// render
+	// 	frameView.Load()
+	// 	bulletView.Load()
+	// 	saucerView.Load()
+	// 	blocksView.Load()
+	// 	statusView.Load()
 
-			// operation
-			if ok, key := console.ReadInput(); ok {
-				saucerController.Input(key)
-			}
+	// 	renderer.Render()
+	// 	renderer.Clear()
 
-			// action
-			bulletModel.Action()
-			master.Action()
-			// detect collidion
-			collider.Detect()
+	// 	// operation
+	// 	if ok, key := console.ReadInput(); ok {
+	// 		saucerController.Input(key)
+	// 	}
 
-			stop = master.ToStop()
+	// 	// action
+	// 	bulletModel.Action()
+	// 	master.Action()
+	// 	// detect collidion
+	// 	collider.Detect()
 
-			time.Sleep(5 * time.Millisecond)
-		}
-		fmt.Printf("Finished. SCORE:%d\n>", models.GetStatus().Score)
-	}
+	// 	if master.ToStop() {
+	// 		stop = true
+	// 	}
 
-	var str string
-	fmt.Scanf("%s", &str)
+	// 	time.Sleep(5 * time.Millisecond)
+	// }
+	// console.Free()
+	// status := models.GetStatus()
+	// fmt.Printf("%s. SCORE:%d\n", status.Message, status.Score)
+	// fmt.Println(status)
+	// // fmt.Printf("Press the Enter Key to terminate>")
+	// // fmt.Scanln()
 }
 
 func test() {

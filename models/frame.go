@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"image"
 	"math"
 )
@@ -14,10 +13,10 @@ type Frame struct {
 
 func NewFrame(width int, height int) *Frame {
 	elements := make(map[string]*image.Rectangle)
-	n := image.Rect(1, 1, width-2, math.MinInt32)
+	n := image.Rect(1, math.MinInt32, width-2, 1)
 	elements["north"] = &n
-	// s := image.Rect(1, height-1, width-2, height-1)
-	// elements["south"] = &s
+	s := image.Rect(1, height-1, width-2, math.MaxInt32)
+	elements["south"] = &s
 	w := image.Rect(math.MinInt32, 1, 1, height-2)
 	elements["west"] = &w
 	e := image.Rect(width-1, 1, math.MaxInt32, height-2)
@@ -56,49 +55,32 @@ func (this *Frame) Affect(o Object) {
 		switch this.GetHitElement(&o) {
 
 		case "north":
-			if currentVect.Y < 0 {
-				currentVect.Y *= -1
-				bullet.SetVect(&currentVect)
-			}
+			currentVect.Y *= -1
+			bullet.SetVect(&currentVect)
 		case "south":
-			if 0 < currentVect.Y {
-				currentVect.Y *= -1
-				bullet.SetVect(&currentVect)
-			}
+			bullet.Vanish()
 		case "west":
-			if currentVect.X < 0 {
-				currentVect.X *= -1
-				bullet.SetVect(&currentVect)
-			}
+			currentVect.X *= -1
+			bullet.SetVect(&currentVect)
 		case "east":
-			if 0 < currentVect.X {
-				currentVect.X *= -1
-				bullet.SetVect(&currentVect)
-			}
+			currentVect.X *= -1
+			bullet.SetVect(&currentVect)
 		case "upper_left":
-			if currentVect.X < 0 && currentVect.Y < 0 {
-				currentVect.X *= -1
-				currentVect.Y *= -1
-				bullet.SetVect(&currentVect)
-			}
+			currentVect.X *= -1
+			currentVect.Y *= -1
+			bullet.SetVect(&currentVect)
 		case "upper_right":
-			if 0 < currentVect.X && currentVect.Y < 0 {
-				currentVect.X *= -1
-				currentVect.Y *= -1
-				bullet.SetVect(&currentVect)
-			}
+			currentVect.X *= -1
+			currentVect.Y *= -1
+			bullet.SetVect(&currentVect)
 		case "lower_left":
-			if currentVect.X < 0 && 0 < currentVect.Y {
-				currentVect.X *= -1
-				currentVect.Y *= -1
-				bullet.SetVect(&currentVect)
-			}
+			currentVect.X *= -1
+			currentVect.Y *= -1
+			bullet.SetVect(&currentVect)
 		case "lower_right":
-			if 0 < currentVect.X && 0 < currentVect.Y {
-				currentVect.X *= -1
-				currentVect.Y *= -1
-				bullet.SetVect(&currentVect)
-			}
+			currentVect.X *= -1
+			currentVect.Y *= -1
+			bullet.SetVect(&currentVect)
 		default:
 			panic("models.frame unknown element name")
 		}
@@ -119,7 +101,7 @@ func (this *Frame) GetHitElement(o *Object) string {
 	rect := (*o).Rect()
 	for k, v := range this.elements {
 		if hit(v, &rect) {
-			fmt.Printf("Frame.GetHitElement: %v\n", k)
+			// fmt.Printf("Frame.GetHitElement: %v\n    %v\n", k, rect)
 			return k
 		}
 	}

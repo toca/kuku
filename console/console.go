@@ -218,9 +218,16 @@ func (this *Console) Write(buffer string) {
 	}
 }
 
+// https://github.com/golang/go/issues/24248
+func (this *Console) Free() {
+	SetConsoleWindowInfo.Call(this.stdOutHandle, _TRUE, uintptr(unsafe.Pointer(this.originalWindowSize)))
+	SetConsoleActiveScreenBuffer.Call(this.stdOutHandle)
+}
+
 // closing
 func (this *Console) Close() {
 	SetConsoleWindowInfo.Call(this.stdOutHandle, _TRUE, uintptr(unsafe.Pointer(this.originalWindowSize)))
+	SetConsoleActiveScreenBuffer.Call(this.stdOutHandle)
 	CloseHandle.Call(this.screenBuffers[0])
 	CloseHandle.Call(this.screenBuffers[1])
 }

@@ -7,11 +7,12 @@ import (
 )
 
 type Bullet struct {
-	rect      *image.Rectangle
-	vector    *image.Point
-	lastMoved time.Time
-	lastHited time.Time
-	changing  bool
+	rect        *image.Rectangle
+	vector      *image.Point
+	lastMoved   time.Time
+	lastHited   time.Time
+	changing    bool
+	disappeared bool
 }
 
 // 移動量は 1/secにしてみる
@@ -19,7 +20,7 @@ func NewBullet(x, y int, vx, vy int) *Bullet {
 	v := image.Pt(vx, vy)
 	r := image.Rect(x, y, x, y)
 	now := time.Now()
-	return &Bullet{&r, &v, now, now, false} // image.Rect(x, y, x, y),
+	return &Bullet{&r, &v, now, now, false, false} // image.Rect(x, y, x, y),
 
 }
 
@@ -38,6 +39,18 @@ func (this *Bullet) SetVect(v *image.Point) {
 		this.changing = true
 	} else {
 		// fmt.Printf("bullet.setvect ignore\n")
+	}
+}
+
+func (this *Bullet) Reset(x, y, vx, vy int) {
+	if !this.changing {
+		this.rect.Min.X = x
+		this.rect.Max.X = x
+		this.rect.Min.Y = y
+		this.rect.Max.Y = y
+		this.vector.X = vx
+		this.vector.Y = vy
+		this.disappeared = false
 	}
 }
 
@@ -60,6 +73,10 @@ func (this *Bullet) Action() {
 	this.changing = false
 }
 
+func (this *Bullet) Vanish() {
+	this.disappeared = true
+}
+
 // object interface
 func (this *Bullet) HitTest(o Object) bool {
 	return this.Rect().Overlaps(o.Rect())
@@ -76,5 +93,5 @@ func (this *Bullet) Affect(o Object) {
 }
 
 func (this *Bullet) MarkedForDeath() bool {
-	return false
+	return this.disappeared
 }
