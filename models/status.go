@@ -8,10 +8,11 @@ type Status struct {
 	Message     string
 	BulletCount int
 	FrameRate   int
+	Score       uint32
 	pos         image.Point
 }
 
-var instance = Status{"", 3, 0, image.Pt(0, 0)}
+var instance = Status{"", 3, 0, 0, image.Pt(0, 0)}
 
 func GetStatus() *Status {
 	return &instance

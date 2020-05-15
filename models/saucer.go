@@ -9,8 +9,8 @@ type Saucer struct {
 }
 
 func NewSaucer(x0, y0, x1, y1 int) *Saucer {
-	r := image.Rect(x0, y0, x1, y1)
-	return &Saucer{&r}
+	rect := image.Rect(x0, y0, x1, y1)
+	return &Saucer{&rect}
 }
 
 func (this *Saucer) Left() {
@@ -27,16 +27,20 @@ func (this *Saucer) Right() {
 func (this *Saucer) Rect() image.Rectangle {
 	return *this.rect
 }
+
 func (this *Saucer) HitTest(o Object) bool {
-	rect := o.Rect()
-	return Overlap(this.rect, &rect)
+	reflector := NewReflector(this.rect.Min.X, this.rect.Min.Y, this.rect.Max.X, this.rect.Max.Y)
+	return reflector.HitTest(o)
 }
+
 func (this *Saucer) Affect(o Object) {
+	// fmt.Printf("saucer Affect\n") 何とぶつかっているのだ?
 	if bullet, ok := o.(*Bullet); ok {
-		if 0 < bullet.Vect().Y {
-			v := bullet.Vect()
-			v.Y *= -1
-			bullet.SetVect(&v)
-		}
+		reflector := NewReflectorWithAcceleration(this.rect.Min.X, this.rect.Min.Y, this.rect.Max.X, this.rect.Max.Y, 1)
+		reflector.Affect(bullet)
 	}
+}
+
+func (this *Saucer) MarkedForDeath() bool {
+	return false
 }

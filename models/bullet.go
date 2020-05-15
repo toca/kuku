@@ -10,6 +10,7 @@ type Bullet struct {
 	rect      *image.Rectangle
 	vector    *image.Point
 	lastMoved time.Time
+	lastHited time.Time
 	changing  bool
 }
 
@@ -18,7 +19,7 @@ func NewBullet(x, y int, vx, vy int) *Bullet {
 	v := image.Pt(vx, vy)
 	r := image.Rect(x, y, x, y)
 	now := time.Now()
-	return &Bullet{&r, &v, now, false} // image.Rect(x, y, x, y),
+	return &Bullet{&r, &v, now, now, false} // image.Rect(x, y, x, y),
 
 }
 
@@ -39,6 +40,7 @@ func (this *Bullet) SetVect(v *image.Point) {
 		// fmt.Printf("bullet.setvect ignore\n")
 	}
 }
+
 func (this *Bullet) Action() {
 	d := time.Now().Sub(this.lastMoved)
 	xMoves := float64(d.Milliseconds()) * float64(this.Vect().X) / 1000.0
@@ -65,4 +67,14 @@ func (this *Bullet) HitTest(o Object) bool {
 
 // object interface
 func (this *Bullet) Affect(o Object) {
+	if block, ok := o.(*Block); ok {
+		if this.lastHited != this.lastMoved {
+			block.Hit()
+			this.lastHited = this.lastMoved
+		}
+	}
+}
+
+func (this *Bullet) MarkedForDeath() bool {
+	return false
 }

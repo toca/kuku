@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"image"
 	"math"
 )
@@ -13,21 +14,21 @@ type Frame struct {
 
 func NewFrame(width int, height int) *Frame {
 	elements := make(map[string]*image.Rectangle)
-	n := image.Rect(1, 0, width-2, 0)
+	n := image.Rect(1, 1, width-2, math.MinInt32)
 	elements["north"] = &n
-	s := image.Rect(1, height-1, width-2, height-1)
-	elements["south"] = &s
-	w := image.Rect(int(math.Inf(-1)), 1, 0, height-2)
+	// s := image.Rect(1, height-1, width-2, height-1)
+	// elements["south"] = &s
+	w := image.Rect(math.MinInt32, 1, 1, height-2)
 	elements["west"] = &w
 	e := image.Rect(width-1, 1, math.MaxInt32, height-2)
 	elements["east"] = &e
-	ul := image.Rect(0, 0, 0, 0)
+	ul := image.Rect(math.MinInt32, math.MinInt32, 1, 1)
 	elements["upper_left"] = &ul
-	ur := image.Rect(width-1, 0, width, 0)
+	ur := image.Rect(width-2, math.MinInt32, math.MaxInt32, 1)
 	elements["upper_right"] = &ur
-	ll := image.Rect(0, height-1, 0, height-1)
+	ll := image.Rect(math.MinInt32, height-2, 1, math.MaxInt32)
 	elements["lower_left"] = &ll
-	lr := image.Rect(width-1, height-1, width-1, height-1)
+	lr := image.Rect(width-2, height-2, math.MaxInt32, math.MaxInt32)
 	elements["lower_right"] = &lr
 	return &Frame{width, height, elements}
 }
@@ -105,9 +106,11 @@ func (this *Frame) Affect(o Object) {
 		r := saucer.Rect()
 		for hit(this.elements["west"], &r) {
 			saucer.Right()
+			r = saucer.Rect()
 		}
 		for hit(this.elements["east"], &r) {
 			saucer.Left()
+			r = saucer.Rect()
 		}
 	}
 }
@@ -116,6 +119,7 @@ func (this *Frame) GetHitElement(o *Object) string {
 	rect := (*o).Rect()
 	for k, v := range this.elements {
 		if hit(v, &rect) {
+			fmt.Printf("Frame.GetHitElement: %v\n", k)
 			return k
 		}
 	}
@@ -123,4 +127,8 @@ func (this *Frame) GetHitElement(o *Object) string {
 }
 func hit(lhs, rhs *image.Rectangle) bool {
 	return Overlap(lhs, rhs)
+}
+
+func (this *Frame) MarkedForDeath() bool {
+	return false
 }

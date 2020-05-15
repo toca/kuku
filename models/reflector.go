@@ -73,9 +73,13 @@ type Reflector struct {
 	topRight    *image.Rectangle
 	bottomLeft  *image.Rectangle
 	bottomRight *image.Rectangle
+	accelerate  int
 }
 
 func NewReflector(x0, y0, x1, y1 int) *Reflector {
+	return NewReflectorWithAcceleration(x0, y0, x1, y1, 0)
+}
+func NewReflectorWithAcceleration(x0, y0, x1, y1, accelerate int) *Reflector {
 	var (
 		rect        = image.Rect(x0-1, y0-1, x1+1, y1+1)
 		top         = image.Rect(x0, y0-1, x1, y0-1)
@@ -87,7 +91,7 @@ func NewReflector(x0, y0, x1, y1 int) *Reflector {
 		bottomLeft  = image.Rect(x0-1, y1+1, x0-1, y1+1)
 		bottomRight = image.Rect(x1+1, y1+1, x1+1, y1+1)
 	)
-	return &Reflector{&rect, &top, &bottom, &left, &right, &topLeft, &topRight, &bottomLeft, &bottomRight}
+	return &Reflector{&rect, &top, &bottom, &left, &right, &topLeft, &topRight, &bottomLeft, &bottomRight, accelerate}
 }
 
 func (this *Reflector) HitTest(o Object) bool {
@@ -98,8 +102,19 @@ func (this *Reflector) HitTest(o Object) bool {
 func (this *Reflector) Affect(reflectable Reflectable) {
 	currentVect := reflectable.Vect()
 	r := reflectable.Rect()
-	fmt.Printf("Reflector.Hit: %s\n", this.GetHitPos(&r, &currentVect))
-	switch this.GetHitPos(&r, &currentVect) {
+	// fmt.Printf("Reflector.Hit: %s\n", this.GetHitPos(&r, &currentVect))
+	if 0 < currentVect.X {
+		currentVect.X += this.accelerate
+	} else {
+		currentVect.X -= this.accelerate
+	}
+	if 0 < currentVect.Y {
+		currentVect.Y += this.accelerate
+	} else {
+		currentVect.Y -= this.accelerate
+	}
+	name := this.GetHitPos(&r, &currentVect)
+	switch name {
 
 	case "top":
 		currentVect.Y *= -1
@@ -130,7 +145,7 @@ func (this *Reflector) Affect(reflectable Reflectable) {
 		currentVect.Y *= -1
 		reflectable.SetVect(&currentVect)
 	default:
-		panic("models.frame unknown element name")
+		panic(fmt.Sprintf("models.Refrector unknown element name [%s]. %v x %v", name, r, this.rect))
 	}
 }
 

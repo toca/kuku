@@ -7,8 +7,8 @@ import (
 type BlockType int
 
 const (
-	NORMAL_BLOCK BlockType = iota
-	HARD_BLOCK   BlockType = iota
+	NORMAL_BLOCK BlockType = 1
+	HARD_BLOCK   BlockType = 2
 )
 
 type Block struct {
@@ -25,12 +25,19 @@ func NewBlock(x0, y0, x1, y1 int, blockType BlockType) *Block {
 	return &Block{&r, d, blockType, reflector}
 }
 
+func (this *Block) Hit() {
+	this.durability--
+	if this.durability == 0 {
+		GetStatus().Score += uint32(100 * this.blockType)
+	}
+}
+
 func durability(t BlockType) int {
 	switch t {
 	case NORMAL_BLOCK:
-		return 1
+		return 3
 	case HARD_BLOCK:
-		return 2
+		return 6
 	default:
 		panic("models.Block: Unknown BlockType")
 	}
@@ -48,4 +55,7 @@ func (this *Block) Affect(o Object) {
 	if bullet, ok := o.(*Bullet); ok {
 		this.reflector.Affect(bullet)
 	}
+}
+func (this *Block) MarkedForDeath() bool {
+	return this.durability <= 0
 }

@@ -8,6 +8,7 @@ type Object interface {
 	Rect() image.Rectangle
 	HitTest(Object) bool
 	Affect(Object)
+	MarkedForDeath() bool
 }
 
 // to collision detection

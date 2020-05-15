@@ -7,6 +7,7 @@ import (
 type Collider struct {
 	activeObjects     []models.Object
 	motionlessObjects []models.Object
+	// lastDetected      time.Time
 }
 
 func NewCollider() *Collider {
@@ -31,12 +32,32 @@ func (this *Collider) RemoveMotionless(o *models.Object) {
 }
 
 func (this *Collider) Detect() {
-	for ai, _ := range this.activeObjects {
-		for mi, _ := range this.motionlessObjects {
+	// const rate = 16 // 1000 / 60 (FPS)
+	// d := time.Now().Sub(this.lastDetected)
+	// if float64(d.Milliseconds()) < rate {
+	// 	return
+	// }
+	for ai := 0; ai < len(this.activeObjects); ai++ {
+		if this.activeObjects[ai].MarkedForDeath() {
+			this.activeObjects = append(this.activeObjects[:ai], this.activeObjects[ai+1:]...)
+			ai++
+			if len(this.activeObjects) <= ai {
+				break
+			}
+		}
+		for mi := 0; mi < len(this.motionlessObjects); mi++ {
+			if this.motionlessObjects[mi].MarkedForDeath() {
+				this.motionlessObjects = append(this.motionlessObjects[:mi], this.motionlessObjects[mi+1:]...)
+				mi++
+				if len(this.motionlessObjects) <= mi {
+					break
+				}
+			}
 			if this.motionlessObjects[mi].HitTest(this.activeObjects[ai]) {
 				this.activeObjects[ai].Affect(this.motionlessObjects[mi])
 				this.motionlessObjects[mi].Affect(this.activeObjects[ai])
 			}
 		}
 	}
+	// this.lastDetected = this.lastDetected.Add(d)
 }

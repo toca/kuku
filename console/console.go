@@ -28,16 +28,19 @@ var kernel32Dll = loadDll("kernel32.dll")
 
 // functions
 var (
-	CreateConsoleScreenBuffer    = findProc(kernel32Dll, "CreateConsoleScreenBuffer")
-	SetConsoleActiveScreenBuffer = findProc(kernel32Dll, "SetConsoleActiveScreenBuffer")
-	WriteConsole                 = findProc(kernel32Dll, "WriteConsoleW")
-	CloseHandle                  = findProc(kernel32Dll, "CloseHandle")
-	SetConsoleCursorPosition     = findProc(kernel32Dll, "SetConsoleCursorPosition")
-	SetConsoleWindowInfo         = findProc(kernel32Dll, "SetConsoleWindowInfo")
-	GetStdHandle                 = findProc(kernel32Dll, "GetStdHandle")
-	SetConsoleScreenBufferSize   = findProc(kernel32Dll, "SetConsoleScreenBufferSize")
-	GetConsoleScreenBufferInfoEx = findProc(kernel32Dll, "GetConsoleScreenBufferInfoEx")
-	ReadConsoleInput             = findProc(kernel32Dll, "ReadConsoleInputW")
+	CreateConsoleScreenBuffer     = findProc(kernel32Dll, "CreateConsoleScreenBuffer")
+	SetConsoleActiveScreenBuffer  = findProc(kernel32Dll, "SetConsoleActiveScreenBuffer")
+	WriteConsole                  = findProc(kernel32Dll, "WriteConsoleW")
+	CloseHandle                   = findProc(kernel32Dll, "CloseHandle")
+	SetConsoleCursorPosition      = findProc(kernel32Dll, "SetConsoleCursorPosition")
+	SetConsoleWindowInfo          = findProc(kernel32Dll, "SetConsoleWindowInfo")
+	GetStdHandle                  = findProc(kernel32Dll, "GetStdHandle")
+	SetConsoleScreenBufferSize    = findProc(kernel32Dll, "SetConsoleScreenBufferSize")
+	GetConsoleScreenBufferInfoEx  = findProc(kernel32Dll, "GetConsoleScreenBufferInfoEx")
+	ReadConsoleInput              = findProc(kernel32Dll, "ReadConsoleInputW")
+	GetNumberOfConsoleInputEvents = findProc(kernel32Dll, "GetNumberOfConsoleInputEvents")
+	GetConsoleMode                = findProc(kernel32Dll, "GetConsoleMode")
+	SetConsoleMode                = findProc(kernel32Dll, "SetConsoleMode")
 )
 
 // define win32 const
@@ -49,6 +52,7 @@ const _GENERIC_WRITE = 0x80000000
 const _STD_OUTPUT_HANDLE = 0xFFFFFFF5
 const _STD_INPUT_HANDLE = 0xFFFFFFFF6
 const _KEY_EVENT = 0x0001
+const ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
 
 type VirtualKeyCode uint16
 
@@ -182,6 +186,8 @@ func NewConsole(width int, height int) (*Console, error) {
 		return nil, err
 	}
 
+	// to using color
+	enableVirtualConsole(stdOutHandle)
 	return &Console{[2]uintptr{handle1, handle2}, 0, stdOutHandle, stdInHandle, &newWindowSize, &originalWindowSize}, nil
 }
 
@@ -227,6 +233,18 @@ func (this *Console) ResetWindowSize() {
 }
 
 func (this *Console) ReadInput() (bool, operation.KeyInput) {
+	// fmt.Printf("ReadInput->\n")
+	// defer fmt.Printf("ReadInput<-\n")
+
+	var count _DWORD = 0
+	success, _, err := GetNumberOfConsoleInputEvents.Call(this.stdInHandle, uintptr(unsafe.Pointer(&count)))
+	if success != _TRUE {
+		panic(fmt.Sprintf("Consoel.ReadInput: %v", err))
+	}
+	if count <= 0 {
+		return false, operation.KeyInput{operation.VK_NULL, 0}
+	}
+
 	record := _INPUT_RECORD{}
 	var len _DWORD = 1
 	var numOfEvents _DWORD = 0
@@ -253,6 +271,18 @@ func (this *Console) ReadInput() (bool, operation.KeyInput) {
 	}
 	return true, operation.KeyInput{operation.VirtualKeyCode(keyEventRecord.wVirtualKeyCode), int(keyEventRecord.wRepeatCount)}
 
+}
+
+func enableVirtualConsole(stdOutHandle uintptr) {
+	var mode _DWORD = 0
+	res, _, err := GetConsoleMode.Call(stdOutHandle, uintptr(unsafe.Pointer(&mode)))
+	if res != _TRUE {
+		panic(err)
+	}
+	res, _, err = SetConsoleMode.Call(stdOutHandle, uintptr(mode|ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+	if res != _TRUE {
+		panic(err)
+	}
 }
 
 func (this *Console) currentConsoleBuffer() uintptr {

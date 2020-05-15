@@ -17,7 +17,7 @@ func NewStatus(r *Renderer, model *models.Status) *Status {
 
 func (this *Status) Load() {
 	bullets := strings.Repeat("* ", this.model.BulletCount)
-	s := fmt.Sprintf("| %s| %s", bullets, this.model.Message)
+	s := fmt.Sprintf("| %s| SCORE: %08d %s", bullets, this.model.Score, this.model.Message)
 	for i, r := range s {
 		this.renderer.Set(this.model.Rect().Min.X+i, this.model.Rect().Min.Y, r)
 	}
